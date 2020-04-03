@@ -1,4 +1,5 @@
-﻿using ResumeBuilder.Models;
+﻿using ResumeBuilder.Helpers;
+using ResumeBuilder.Models;
 using ResumeBuilder.ViewModels;
 using System;
 using System.Collections.Generic;
@@ -8,22 +9,22 @@ using System.Web.Mvc;
 
 namespace ResumeBuilder.Controllers
 {
-    public class SearchUserController : Controller
+    [AuthorizeIfSessionExists]
+    public class SearchController : Controller
     {
         private ResumeBuilderDBContext db;
-        public SearchUserController()
+        public SearchController()
         {
             db = new ResumeBuilderDBContext();
         }
 
-        public ActionResult Search()
+        public ActionResult GetSearchPartialView()
         {
-            return PartialView();
+            return PartialView("Search");
         }
 
-        public ActionResult GetUser()
+        public ActionResult GetUserSkills()
         {
-            //db.Configuration.ProxyCreationEnabled = false;
             List<UserSkillVM> listUserSkills = new List<UserSkillVM>();
             listUserSkills = (from user in db.UserDetails.Include("Skills").ToList()
                               select new UserSkillVM

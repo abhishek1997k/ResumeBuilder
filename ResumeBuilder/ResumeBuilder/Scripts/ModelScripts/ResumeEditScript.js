@@ -1,10 +1,11 @@
-﻿$(document).ready(function () {
+$(document).ready(function () {
+
     $("body").on("click", ".js-add-education", function () {
         $('#modalEducationDetails').modal('show');
     });
 
     $("body").on("click", ".js-add-project", function () {
-       $('#modalProject').modal('show');
+        $('#modalProject').modal('show');
     });
 
     $("body").on("click", ".js-add-workex", function () {
@@ -13,6 +14,10 @@
 
     $("body").on("click", ".js-add-skill", function () {
         $('#modalSkills').modal('show');
+    });
+
+    $("body").on("click", "#btnCloseSkills", function () {
+        $('#skillMenu').empty();
     });
 
     $("body").on('change', 'input[type=radio][name=CGPAOrPercentage]', function () {
@@ -45,6 +50,49 @@
         });
         $('#modalEducationDetails').on('hidden.bs.modal', function () {
             clearFields();
+        });
+    });
+
+    $("body").on('click', '#educationDetails', function () {
+        var addedTenDetails = $('#addedTenthDetails').data('value')
+        var addedTwelfthDetails = $('#addedTwelfthDetails').data('value')
+
+        if (addedTenDetails == 1) {
+            $("input[type=radio][value=" + addedTenDetails + "]").prop("disabled", true);
+        }
+
+        if (addedTwelfthDetails == 2) {
+            $("input[type=radio][value=" + addedTwelfthDetails + "]").prop("disabled", true);
+        }
+    });
+
+    $("body").on('change', 'input[type=radio][name=marksOption]', function () {
+        if ($(this).val() == 'CGPA') {
+            $('.marks').attr('placeholder', 'Enter CGPA');
+        } else {
+            $('.marks').attr('placeholder', 'Enter percentage ');
+        }
+    });
+
+    $('#checkWorking').click(function () {
+        if ($(this).is(':checked')) {
+            $(".hide-if-currently-working").hide();
+        } else {
+            $(".hide-if-currently-working").show();
+        }
+    });
+
+    $("body").on("click", "#educationDetails", function () {
+        $('input[type=radio][name=courseOption]').change(function () {
+
+            if ($(this).val() == '1') {
+                $(".all-other").show();
+                $(".stream").hide();
+            }
+            else {
+                $(".stream").show();
+                $(".all-other").show();
+            }
         });
     });
 
@@ -82,38 +130,45 @@
         $('#modalBasicInfo').modal('show');
     });
 
-    $("body").on("click", ".js-save-user", function () {
-        var userData = {
-            "UserID": $("#userId").val(),
-            "Name": $("#txtFullName").val(),
-            "Gender": $('input[name="Gender"]:checked').val(),
-            "DateOfBirth": $("#dateDOB").val(),
-            "PhoneNumber": $("#txtPhoneNumber").val(),
-            "LanguageIds": [],
-            "Summary": $("#txtSummary").val()
-        };
 
-        $('input[type="checkbox"]:checked').each(function (e, el) {
-            userData.LanguageIds.push($(el).val());
-        });
+    $("body").on("click", ".js-save-user", function (e) {
+        e.preventDefault();
+        var flag = $("#basicInfoForm").valid();
+        if (flag) {
+            var userData = {
+                "UserID": $.trim($("#userId").val()),
+                "Name": $.trim($("#txtFullName").val()),
+                "Gender": $.trim($('input[name="Gender"]:checked').val()),
+                "DateOfBirth": $.trim($("#dateDOB").val()),
+                "PhoneNumber": $.trim($("#txtPhoneNumber").val()),
+                "LanguageIds": [],
+                "Summary": $.trim($("#txtSummary").val())
+            };
 
-        if (userData.LanguageIds[userData.LanguageIds.length - 1] == "on") {
-            userData.LanguageIds.pop();
+            $('input[type="checkbox"]:checked').each(function (e, el) {
+                userData.LanguageIds.push($(el).val());
+            });
+
+            if (userData.LanguageIds[userData.LanguageIds.length - 1] == "on") {
+                userData.LanguageIds.pop();
+            }
+            var params = $.extend({}, params);
+            params['url'] = '/SaveDetails/SaveBasicInformation';
+            params['data'] = userData;
+            params['requestType'] = 'POST';
+            params['successCallbackFunction'] = function () {
+                $("#modalBasicInfo").modal("hide");
+
+            };
+            params['errorCallBackFunction'] = function () {
+
+            }
+            commonAjax(params);
+
         }
-        var params = $.extend({}, params);
-        params['url'] = '/Resume/SaveBasicInformation';
-        params['data'] = userData;
-        params['requestType'] = 'POST';
-        params['successCallbackFunction'] = function () {
-            bootbox.alert("<p style='color:black;'>Basic information successfully saved.</p>");
-            $("#modalBasicInfo").modal("hide");
-            
-        };
-        params['errorCallBackFunction'] = function () {
-            bootbox.alert("<p style='color:black;'>Error!</p>");
+        else {
+            bootbox.alert("<p style='color:black;'>Fill The Fields with * mark!</p>");
         }
-        commonAjax(params);
-
         return false;
     });
 
@@ -138,7 +193,7 @@
         $("#selectEndMonth").val(endMonth).change();
         $("#selectEndYear").val(endYear).change();
 
-        if (isWorking=="True") {
+        if (isWorking == "True") {
             $('input[name="IsCurrentlyWorking"]').prop("checked", true);
             $(".hide-if-currently-working").hide();
         }
@@ -153,32 +208,40 @@
     });
 
     $('body').on('click', '.js-save-workex', function (e) {
-        debugger;
         e.preventDefault();
-        var formData = {
-            "WorkExperienceID": $('input[name="WorkExperienceID"]').val(),
-            "OrganizationName": $('input[name="OrganizationName"]').val(),
-            "Designation": $('input[name="Designation"]').val(),
-            "StartMonth": $("#selectStartMonth").val(),
-            "StartYear": $("#selectStartYear").val(),
-            "EndMonth": $("#selectEndMonth").val(),
-            "EndYear": $("#selectEndYear").val(),
-            "IsCurrentlyWorking": $('#checkWorking').is(":checked")
-        };
 
-       
-        var params = $.extend({}, params);
-        params['url'] = '/Resume/SaveWorkExperience';
-        params['data'] = formData;
-        params['requestType'] = 'POST';
-        params['successCallbackFunction'] = function (result) {
-            $("#modalWorkExperience").modal("hide");
+        var flag = $("#workExperienceForm").valid();
 
-        };
-        params['errorCallBackFunction'] = function (result) {
-            bootbox.alert("<p style='color:black;'>Error!</p>");
+        if (flag) {
+            var formData = {
+                "WorkExperienceID": $('input[name="WorkExperienceID"]').val(),
+                "OrganizationName": $('input[name="OrganizationName"]').val(),
+                "Designation": $('input[name="Designation"]').val(),
+                "StartMonth": $("#selectStartMonth").val(),
+                "StartYear": $("#selectStartYear").val(),
+                "EndMonth": $("#selectEndMonth").val(),
+                "EndYear": $("#selectEndYear").val(),
+                "IsCurrentlyWorking": $('#checkWorking').is(":checked")
+            };
+
+
+            var params = $.extend({}, params);
+            params['url'] = '/SaveDetails/SaveWorkExperience';
+            params['data'] = formData;
+            params['requestType'] = 'POST';
+            params['successCallbackFunction'] = function (result) {
+                $("#modalWorkExperience").modal("hide");
+
+            };
+            params['errorCallBackFunction'] = function (result) {
+
+            }
+            commonAjax(params);
         }
-        commonAjax(params)
+        else {
+            bootbox.alert("<p style='color:red;'>Fill the Fields with * Mark!</p>");
+        }
+        return false;
     });
 
     $('body').on('click', '.js-edit-project', function (e) {
@@ -216,17 +279,16 @@
 
 
             var params = $.extend({}, params);
-            params['url'] = '/Resume/SaveProjectDetails';
+            params['url'] = '/SaveDetails/SaveProjectDetails';
             params['data'] = formData;
             params['requestType'] = 'POST';
 
             params['successCallbackFunction'] = function () {
-                debugger;
                 bootbox.alert("<p style='color:black;'>Project Details updated sucessfully</p>");
                 $("#modalProject").modal("hide");
             };
             params['errorCallBackFunction'] = function (result) {
-                bootbox.alert("<p style='color:black;'>Error!</p>");
+
             }
             commonAjax(params);
         }
@@ -249,7 +311,7 @@
 
         $('input[name="EducationalDetailsID"]').val(id);
         $('input[name="CourseId"]').val(courseid);
-        $('input[name="Stream"]').val(stream);
+        $('input[name="BoardOrUniversity"]').val(stream);
         $('input[name="PassingYear"]').val(passingyear);
         $('#boardType').val(board).change();
         $('input[name="TotalPercentageOrCGPAValue"]').val(marks);
@@ -258,6 +320,9 @@
                 $(el).prop('checked', true);
             }
         })
+        $('[name=BoardOrUniversity] option').filter(function () {
+            return ($(this).text() == stream);
+        }).prop('selected', true);
 
         if (courseid == "1") {
             $(".all-other").show();
@@ -284,44 +349,46 @@
     });
 
     $('body').on('click', '.js-save-education', function (e) {
-        
         e.preventDefault();
-        var id = $('input[name="EducationalDetailsID"]').val();
-        var formData = {
-            "EducationalDetailsID": id,
-            "UserID": $("#userId").val(),
-            "CourseID": $('input[name="courseOption"]:checked').val(),
-            "Stream": $('input[name="Stream"]').val(),
-            "PassingYear": $('input[name="PassingYear"]').val(),
-            "TotalPercentageOrCGPAValue": $('input[name="TotalPercentageOrCGPAValue"]').val(),
-            "CGPAOrPercentage": $('input[name="CGPAOrPercentage"]:checked').val(),
-            "BoardOrUniversity": $('#boardType option:selected').text()
-        };
+        var flag = $("#educationDetailsForm").valid();
+        if (flag) {
+            var id = $.trim($('input[name="EducationalDetailsID"]').val());
+            var formData = {
+                "EducationalDetailsID": id,
+                "UserID": $.trim($("#userId").val()),
+                "CourseID": $.trim($('input[name="courseOption"]:checked').val()),
+                "Stream": $.trim($('input[name="Stream"]').val()),
+                "PassingYear": $.trim($('input[name="PassingYear"]').val()),
+                "TotalPercentageOrCGPAValue": $.trim($('input[name="TotalPercentageOrCGPAValue"]').val()),
+                "CGPAOrPercentage": $.trim($('input[name="CGPAOrPercentage"]:checked').val()),
+                "BoardOrUniversity": $.trim($('#boardType option:selected').text())
+            };
+            if (formData.CourseID == 1) {
+                formData.Stream = 'N/A';
+            }
+            var params = $.extend({}, params);
+            params['url'] = '/SaveDetails/SaveEducationalDetails';
+            params['data'] = formData;
+            params['requestType'] = 'POST';
+            params['successCallbackFunction'] = function () {
+                $("#modalEducationDetails").modal("hide");
+                bootbox.alert("<p style='color:black;'>Education Details updated sucessfully</p>");
+            };
+            params['errorCallBackFunction'] = function () {
+            }
+            commonAjax(params);
+            //disable radio button for client-side
 
-        if (formData.CourseID == 1) {
-            formData.Stream = 'N/A';
+            if (formData.CourseID == 1 || formData.CourseID == 2) {
+                $("input[type=radio][value=" + formData.CourseID + "]").prop("disabled", true);
+                $("input[type=radio][value=" + formData.CourseID + "]").prop("checked", false);
+                $(".all-other").hide();
+            }
         }
-        var params = $.extend({}, params);
-        params['url'] = '/Resume/SaveEducationalDetails';
-        params['data'] = formData;
-        params['requestType'] = 'POST';
-        params['successCallbackFunction'] = function () {
-            $("#modalEducationDetails").modal("hide");
-            bootbox.alert("<p style='color:black;'>Education Details updated sucessfully</p>");
-        };
-        params['errorCallBackFunction'] = function () {
-            bootbox.alert("<p style='color:black;'>Error!</p>");
+        else {
+            bootbox.alert("<p style='color:red;'>Fill the fields with * mark!</p>");
         }
-        commonAjax(params);
-
-        //disable radio button for client-side
-
-        if (formData.CourseID == 1 || formData.CourseID == 2) {
-            $("input[type=radio][value=" + formData.CourseID + "]").prop("disabled", true);
-            $("input[type=radio][value=" + formData.CourseID + "]").prop("checked", false);
-            $(".all-other").hide();
-        }
-
+        return false;
     });
 
     $("body").on("click", "#btnSaveSkills", function (e) {
@@ -335,20 +402,24 @@
             skillDetails.SkillNames.push($(this).text());
         })
 
-        var params = $.extend({}, params);
-        params['url'] = '/Resume/SaveUserSkills';
-        params['data'] = skillDetails;
-        params['requestType'] = 'POST';
-        params['successCallbackFunction'] = function () {
-            $("#modalSkills").modal("hide");
-            bootbox.alert("<p style='color:black;'>Skills successfully saved.</p>");
-            
-        };
-        params['errorCallBackFunction'] = function () {
-            bootbox.alert("<p style='color:black;'>Error!</p>");
-        }
-        commonAjax(params);
 
+        if ($(".skillItem").text() !== "") {
+            var params = $.extend({}, params);
+            params['url'] = '/SaveDetails/SaveUserSkills';
+            params['data'] = skillDetails;
+            params['requestType'] = 'POST';
+            params['successCallbackFunction'] = function () {
+                $("#modalSkills").modal("hide");
+            };
+            params['errorCallBackFunction'] = function () {
+            }
+            commonAjax(params);
+        }
+        else {
+            bootbox.alert("<p style='color:red;'>Fill the fields with * mark!</p>");
+        }
+
+        $('ul').empty();
         return false;
     });
 
@@ -364,10 +435,10 @@
                 params['url'] = '/Delete/DeleteProject?id=' + id;
                 params['requestType'] = 'POST';
                 params['successCallbackFunction'] = function (resultfinal) {
-                   
+
                 };
                 params['errorCallBackFunction'] = function () {
-                    bootbox.alert("<p style='color:black;'>Error!</p>");
+
                 }
 
                 commonAjax(params);
@@ -392,7 +463,7 @@
                 params['url'] = '/Delete/DeleteWorkExperience?id=' + id;
                 params['requestType'] = 'POST';
                 params['successCallbackFunction'] = function (resultfinal) {
-                    
+
                 };
                 params['errorCallBackFunction'] = function () {
                     bootbox.alert("<p style='color:black;'>Error!</p>");
@@ -413,7 +484,7 @@
         var userID = $("#userId").val();
         var skillID = $button.data("skill-id");
         var formData = {
-            "userID":$("#userId").val(),
+            "userID": $("#userId").val(),
             "skillID": skillID,
         };
         bootbox.confirm("<p style='color:black;'>Are you sure to delete this Skill?</p>", function (result) {
@@ -431,6 +502,10 @@
                 }
                 commonAjax(params);
             }
+            else {
+                bootbox.hideAll();
+            }
+            return false;
         });
     })
 
@@ -438,6 +513,7 @@
         e.preventDefault();
         var $button = $(this);
         var educationId = $button.data("education-id");
+        var courseId = $button.data("courseid");
         var formData = {
             "educationId": educationId,
         };
@@ -449,20 +525,75 @@
                 params['requestType'] = 'POST';
                 params['data'] = formData;
                 params['successCallbackFunction'] = function () {
-                    bootbox.alert("<p style='color:black;'>Skill succesfully deleted.</p>");
+
                 };
                 params['errorCallBackFunction'] = function () {
                     bootbox.alert("<p style='color:black;'>Error!</p>");
                 }
                 commonAjax(params);
+                if (courseId == 1) {
+                    $("input[type=radio][value=" + courseId + "]").prop("disabled", false);
+                }
+
+                if (courseId == 2) {
+                    $("input[type=radio][value=" + courseId + "]").prop("disabled", false);
+                }
+            }
+            else {
+                bootbox.hideAll();
+            }
+            return false;
+        });
+
+    });
+
+    var selector = 'input#txtSearch';
+    $(document).on('keydown.autocomplete', selector, function () {
+        $(this).autocomplete({
+            source: function (request, response) {
+                $.ajax({
+                    url: "GetSkill",
+                    method: "GET",
+                    dataType: "json",
+                    data: {
+                        term: request.term
+                    },
+                    success: function (data) {
+                        console.log("data");
+                        response(data);
+                    },
+                    error: function (data) {
+                        console.log("error");
+                    }
+                });
+            },
+            appendTo: $('#autoComplete')
+        });
+    });
+
+
+    $("body").on('click', '#addSkill', function () {
+        var item = $("#txtSearch").val();
+        var isSkillFound = 0;
+        $(".skillItem").each(function (index) {
+            var skillValue = $(this).text();
+            if (skillValue == item) {
+                isSkillFound = 1;
+                return false;
             }
         });
+
+        if (isSkillFound == 0) {
+            $("#skillMenu").append('<li class="skillItem">' + item + '</li>');
+            clearFields();
+        } else {
+            bootbox.alert("<b style='color:black;'>" + item + " already added.</b>");
+        }
     });
 
 });
 
-function removeBackdrop()
-{
+function removeBackdrop() {
     $('body').removeClass('modal-open');
     $('.modal-backdrop').remove();
 }
@@ -471,4 +602,12 @@ function clearFields() {
     $('input[type="text"]').val('');
     $('select').val('');
     $('input[type="checkbox"]').prop('checked', false);
+}
+
+function displaySearchButtonIfAdmin() {
+    
+    var checkadmin = $("#checkIsAdmin").data("checkadmin");
+    if (checkadmin) {
+        $("#btnSearchNav").css("display", "block");
+    }
 }

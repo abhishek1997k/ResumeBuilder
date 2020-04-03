@@ -1,21 +1,140 @@
-﻿// avijit
-// first check whether modal/div exists and for that modal/div choose a "selector" and provide 
-// an event and only when that event is triggered 
-// the validate function should be called
-//$(document/body).on("event","selector",function())
-//$('#projectFormId').validate({
-//    rules: {
+﻿$(document).ready(function () {
 
-//    }
-//})
+    // Basic Info Validation
+    $("body").on('click', '.js-edit-user, .js-save-user', function () {
+        event.preventDefault();
 
+        $.validator.addMethod("regex", function (value, element, regexpr) {
+            return this.optional(element) || !(regexpr.test(value));
+        }, "Please enter valid data.");
 
-$(document).ready(function () {
+        $.validator.addMethod("notStartWithNum", function (value, element, regexpr) {
+            return this.optional(element) || !(regexpr.test(value[0]));
+        }, "Shouldn't start with number.");
 
-    //avijeet
+        $.validator.addMethod("exactlength", function (value, element, param) {
+            return this.optional(element) || value.length == param;
+        }, $.validator.format("Please enter {0} digits."));
+
+        $.validator.addMethod("notFutureDate", function (value, element) {
+            var now = new Date();
+            var myDate = new Date(value);
+            var past = new Date("1800-01-01");
+            var year = value.split('-');
+            return this.optional(element) || value.match(/^\d\d\d\d?\-\d\d?\-\d\d$/) && !(myDate > now || myDate < past);
+        }, "Please enter a valid date.");
+
+        $('#basicInfoForm').validate({
+            rules: {
+                Name: {
+                    required: true,
+                    regex: /[^a-zA-Z. 0-9]/,
+                    notStartWithNum: /[\d/\.]/
+                },
+                PhoneNumber: {
+                    required: true,
+                    regex: /[^\d]/,
+                    exactlength: 10
+                },
+                Gender: {
+                    required: true
+                },
+                DateOfBirth: {
+                    required: true,
+                    notFutureDate: true
+                },
+                Summary: {
+                    required: true
+                },
+                chkLanguages: {
+                    required: true
+                }
+            },
+            messages: {
+                Name: {
+                    required: 'Please enter your name',
+                    regex: 'Please enter a valid name'
+                },
+                PhoneNumber: {
+                    required: 'Please enter your phone number.',
+                    regex: 'Please enter a valid phone number.'
+                },
+                Gender: {
+                    required: 'Please select your gender.'
+                },
+                DateOfBirth: {
+                    required: 'Please enter your date of birth.'
+                },
+                Summary: {
+                    required: 'Please enter summary.'
+                },
+                chkLanguages: {
+                    required: 'Please select at least one Language.'
+                }
+            },
+            errorPlacement: function (error, element) {
+                error.insertAfter(element.closest('.error-msg'));
+            }
+        });
+
+        $("#basicInfoForm").removeAttr("novalidate");
+    });
+
+    // Education Details Validation
+    $("body").on('click', '.js-add-education,.js-save-education, .js-edit-education', function () {
+        $("#modalEducationDetails").on('shown.bs.modal', function () {
+
+            $.validator.addMethod("regex", function (value, element, regexpr) {
+                return this.optional(element) || regexpr.test(value);
+            }, "Invalid input.");
+
+            $('#educationDetailsForm').validate({
+                rules: {
+                    Stream: {
+                        required: true,
+                        regex: /^[A-Za-z \W]+$/
+                    },
+                    PassingYear: {
+                        required: true,
+                        regex: /^[12][0-9]{3}$/
+                    },
+                    TotalPercentageOrCGPAValue: {
+                        required: true,
+                        regex: /^(([0]|[0-9]\.(\d?\d?)|[10].[0])|(100$|^\d{0,2}(\.\d{1,2})? *%?))$/
+                    }
+                },
+                messages: {
+                    Stream: {
+                        required: "Enter your Stream.",
+                        regex: "Enter valid Stream."
+                    },
+                    PassingYear: {
+                        required: "Enter your passing year.",
+                        regex: "Enter valid year of passing."
+                    },
+                    TotalPercentageOrCGPAValue: {
+                        required: function () {
+                            var cgpa = $("#cgpa").prop('checked');
+
+                            if (cgpa)
+                                return "Enter CGPA.";
+                            return "Enter Percentage.";
+                        },
+                        regex: "Enter valid value."
+                    }
+                }
+            });
+
+            $("#educationDetailsForm").removeAttr("novalidate");
+        });
+
+    });
+
+    // Project Details Validation
     $("body").on('click', '.js-add-project, .js-edit-project', function () {
 
         $("#modalProject").on('shown.bs.modal', function () {
+
             $.validator.addMethod("regex", function (value, element, regexpr) {
                 return this.optional(element) || regexpr.test(value);
             }, "Invalid input.");
@@ -61,22 +180,18 @@ $(document).ready(function () {
         });
     });
 
-    //avijeet
-    //$("body").on('click', '.js-add-skill', function () {
-
-    //    $("#modalSkills").on('shown.bs.modal', function () {
-
-            
-    //    });
-    //});
-
-    //Abhishek
-    $("body").on('click', '.js-add-workex', '.js-edit-workex', function () {
+    // Work Experience Validation
+    $("body").on('click', '.js-add-workex, .js-edit-workex', function () {
 
         $("#modalWorkExperience").on('shown.bs.modal', function () {
-            //$.validator.addMethod("regex", function (value, element, regexpr) {
-            //    return this.optional(element) || regexpr.test(value);
-            //}, "Invalid input.");
+
+            $.validator.addMethod("regex", function (value, element, regexpr) {
+                return this.optional(element) || regexpr.test(value);
+            }, "Invalid input.");
+
+            jQuery.validator.addMethod('selectcheck', function (value) {
+                return (value != '0');
+            }, "This field is required.");
 
             $('#workExperienceForm').validate({
                 rules: {
@@ -87,38 +202,63 @@ $(document).ready(function () {
                         required: true
                     },
                     StartMonth: {
-                        required: true
+                        selectcheck: true
                     },
                     StartYear: {
-                        required: true
+                        selectcheck: true
+                    },
+                    EndMonth: {
+                        selectcheck: function() {
+                            if($("#checkWorking").is(':checked')){
+                                return true;
+                            }
+                            else {
+                                return false;
+                            }
+                        }
+                    },
+                    EndYear: {
+                        selectcheck: function () {
+                            if ($("#checkWorking").is(':checked')) {
+                                return true;
+                            }
+                            else {
+                                return false;
+                            }
+                        }
                     }
-
                 },
                 messages: {
                     OrganizationName: {
-                        required: "Please enter the Organisation name"
+                        required: "Please enter the organisation name."
                     },
                     Designation: {
-                        required: "Please enter the designation"
+                        required: "Please enter your designation."
                     },
                     StartMonth: {
-                        required: "Please enter the starting month"
+                        selectcheck: "Please enter the starting month."
                     },
                     StartYear: {
-                        required: "Please enter the starting year"
+                        selectcheck: "Please enter the starting year."
+                    },
+                    EndMonth: {
+                        selectcheck: "Please enter the ending month."
+                    },
+                    EndYear: {
+                        selectcheck: "Please enter the ending year."
                     }
-
                 }
-
             });
+
             $("#workExperienceForm").removeAttr("novalidate");
 
-        });//m
+        });
     });
 
     //Anil
     $("body").on('click', '.js-edit-user, .js-save-user', function () {
         event.preventDefault();
+
         $.validator.addMethod("regex", function (value, element, regexpr) {
             return this.optional(element) || !(regexpr.test(value));
         }, "Please enter valid data.");
@@ -135,7 +275,7 @@ $(document).ready(function () {
             return this.optional(element) || value.match(/^\d\d\d\d?\-\d\d?\-\d\d$/) && !(myDate > now || myDate < past);
         }, "Please enter a valid date.");
 
-        $('#formBasicInfo').validate({
+        $('#basicInfoForm').validate({
             rules: {
                 Name: {
                     required: true,
@@ -146,7 +286,7 @@ $(document).ready(function () {
                     required: true,
                     regex: /[^\d]/,
                     minlength: 10,
-                    maxlength: 13
+                    maxlength: 10
                 },
                 Gender: {
                     required: true
@@ -188,6 +328,8 @@ $(document).ready(function () {
                 error.insertAfter(element.closest('.error-msg'));
             }
         });
+
+        $("#basicInfoForm").removeAttr("novalidate");
     });
 
     //Rahul
@@ -198,24 +340,18 @@ $(document).ready(function () {
                 return this.optional(element) || regexpr.test(value);
             }, "Invalid input.");
 
-
-
             $('#educationDetailsForm').validate({
                 rules: {
-                    //courseOption: {
-                    //    required: function () {
-                    //        var course1 = $("#course1").prop('checked');
-                    //        var course2 = $("#course2").prop('checked');
-                    //        var course3 = $("#course3").prop('checked');
-                    //        var course4 = $("#course4").prop('checked');
-                    //        if (!(course1 || course2 || course3 || course4))
-                    //            return true;
-                    //        return false;
-                    //    }
-                    //},
                     Stream: {
                         required: true,
-                        regex: /^[A-Za-z ]+$/
+                        regex: /^[A-Za-z \W]+$/
+                    },
+                    BoardOrUniversity:{
+                        required:function(){
+                            if($("#boardType").val()==="")
+                                return true;
+                            return false;
+                        }
                     },
                     PassingYear: {
                         required: true,
@@ -227,30 +363,31 @@ $(document).ready(function () {
                     }
                 },
                 messages: {
-                    //courseOption: {
-                    //    required: "Please check your Course first."
-                    //},
                     Stream: {
-                        required: "Enter your Stream.",
-                        regex: "Enter valid Stream."
+                        required: "Please enter your Stream.",
+                        regex: "Please enter valid Stream."
+                    },
+                    BoardOrUniversity:{
+                        required:"Please select your Board/University."
                     },
                     PassingYear: {
-                        required: "Enter your passing year.",
-                        regex: "Enter valid year of passing."
+                        required: "Please enter your passing year.",
+                        regex: "Please enter valid year of passing."
                     },
                     TotalPercentageOrCGPAValue: {
                         required: function () {
                             var cgpa = $("#cgpa").prop('checked');
 
                             if (cgpa)
-                                return "Enter CGPA.";
-                            return "Enter Percentage.";
+                                return "Please enter CGPA.";
+                            return "Please enter Percentage.";
                         },
-                        regex: "Enter valid value."
+                        regex: "Please enter valid value."
                     }
                 }
-            })
-        })
+            });
+            $("#educationDetailsForm").removeAttr("novalidate");
+        });
 
     });
 });
